@@ -10,6 +10,9 @@ import SwiftData
 
 @main
 struct cuentascabalApp: App {
+
+    @StateObject private var appState = AppState()
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
@@ -25,8 +28,26 @@ struct cuentascabalApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            Group {
+                if appState.hasCompletedOnboarding {
+                    HomeView(viewModel: HomeViewModel(appState: appState))
+                } else if !appState.isAuthenticated {
+                    LoginView(viewModel: LoginViewModel(appState: appState))
+                } else {
+                    OnboardingContainerView(
+                        viewModel: OnboardingViewModel(appState: appState)
+                    )
+                }
+            }
+            .animation(.easeInOut(duration: 0.35), value: appState.hasCompletedOnboarding)
+            .animation(.easeInOut(duration: 0.35), value: appState.isAuthenticated)
+            .environmentObject(appState)
+            .onOpenURL { url in
+                // GoogleSignIn not available: missing dependency
+                // GIDSignIn.sharedInstance.handle(url)
+            }
         }
         .modelContainer(sharedModelContainer)
     }
 }
+
